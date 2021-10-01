@@ -38,18 +38,14 @@ int close_socket(int sock)
 }
 
 //发送消息
-void send_400(int addr_cli)  //发送错误页面（连带头部）
+void send_400(int cli_sock, char* get_from_cli)  //发送错误页面（连带头部）
 {
 	char buff[1024]={0};     
 	strcpy(buff,"HTTP/1.1 404 NOT FOUND\n\r");
 	strcat(buff,"Server:http/1.1\n\r");
-	strcat(buff,"Content-Length: ");
-	sprintf(buff+strlen(buff),"%d",0);
-	strcat(buff,"\n\r");
-	strcat(buff,"Content-Type:text/html;charset=utf-8\n\r");
 	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
-	strcat(buff,"404 NOT FOUND");  //发送给客户端的数据，用于显示
-	send(addr_cli,buff,strlen(buff),0);
+	strcat(buff,"404 Not Found\n");  //发送给客户端的数据，用于显示
+	send(cli_sock,buff,strlen(buff),0);
 }
 
 void send_200(int cli_sock, char* get_from_cli)  //发送echo的页面（连带头部）
@@ -58,7 +54,7 @@ void send_200(int cli_sock, char* get_from_cli)  //发送echo的页面（连带�
 	strcpy(buff,"HTTP/1.1 200 OK\n\r");
 	strcat(buff,"Server:http/1.1\n\r");
 	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
-	strcat(buff,get_from_cli);  
+	strcat(buff,get_from_cli);
 	send(cli_sock,buff,strlen(buff),0);
 }
 
@@ -68,7 +64,7 @@ void send_501(int cli_sock, char* get_from_cli)  //发送echo的页面（连带�
 	strcpy(buff,"HTTP/1.1 501 Not Implemented\n\r");
 	strcat(buff,"Server:http/1.1\n\r");
 	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
-	strcat(buff,"501 Not Implemented");  
+	strcat(buff,"501 Not Implemented\n");  
 	send(cli_sock,buff,strlen(buff),0);
     
 }
@@ -78,6 +74,7 @@ void send_501(int cli_sock, char* get_from_cli)  //发送echo的页面（连带�
 //返回值为对应的状态码
 int get_status(Request *request){
     if(request == NULL){
+        
         return 400;
     }
     char* method = request->http_method;
@@ -106,13 +103,13 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Failed creating socket.\n");
         return EXIT_FAILURE;
     }
-    printf("1\n");
+
 
     addr.sin_family = AF_INET;
     addr.sin_port = htons(ECHO_PORT);
     addr.sin_addr.s_addr = INADDR_ANY;
 
-    printf("2\n");
+
     /* servers bind sockets to ports---notify the OS they accept connections */
     if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)))
     {
@@ -121,35 +118,32 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    printf("3\n");
+
     if (listen(sock, 5))
     {
         close_socket(sock);
         fprintf(stderr, "Error listening on socket.\n");
         return EXIT_FAILURE;
     }
-    printf("4\n");
+
     /* finally, loop waiting for input and then write it back */
     while (1)
     {
         cli_size = sizeof(cli_addr);
         client_sock = accept(sock, (struct sockaddr *) &cli_addr,
                                     &cli_size);
-        printf("5\n");
+
         if ((client_sock == -1))
         {
-            printf("7\n");
             close(sock);
             fprintf(stderr, "Error accepting connection.\n");
             return EXIT_FAILURE;
         }
-        printf("6\n");
         readret = 0;
 
         while((readret = recv(client_sock, buf, BUF_SIZE, 0)) >= 1)
         {
             //显示解析信息
-            printf("2\n");
             Request *request = parse(buf, strlen(buf), client_sock);
             if(request != NULL){
                 printf("Http Method %s\n",request->http_method);
@@ -162,28 +156,25 @@ int main(int argc, char* argv[])
             }
 
             //根据解析做出相应的响应
-            printf("1===================");
-            printf("%d\n",get_status(request));
-            printf("1===================");
-            free(request->headers);
-            printf("2===================");
-            free(request);
-            printf("1===================");
-
-            if (send(client_sock, buf, readret, 0) != readret)
-            {
-                close_socket(client_sock);
-                close_socket(sock);
-                fprintf(stderr, "Error sending to client.\n");
-                return EXIT_FAILURE;
+            if(get_status(request) == 200){
+                send_200(client_sock,buf);
+                free(request->headers);
+                free(request);
             }
+            else if(get_status(request) == 501){
+                send_501(client_sock,buf);
+                free(request->headers);
+                free(request);
+            }
+            else{
+                send_400(client_sock,buf);
+            }
+            
             memset(buf, 0, BUF_SIZE);
-        }
-        printf("2==================="); 
+        } 
 
         if (readret == -1)
         {
-            printf("3===================");
             close_socket(client_sock);
             close_socket(sock);
             fprintf(stderr, "Error reading from client socket.\n");
@@ -192,7 +183,6 @@ int main(int argc, char* argv[])
 
         if (close_socket(client_sock))
         {
-            printf("4===================");
             close_socket(sock);
             fprintf(stderr, "Error closing client socket.\n");
             return EXIT_FAILURE;

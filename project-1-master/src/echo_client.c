@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-09-29 00:49:48
- * @LastEditTime: 2021-09-30 23:48:20
+ * @LastEditTime: 2021-10-01 10:23:12
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\src\echo_client.c
@@ -73,12 +73,14 @@ int main(int argc, char* argv[])
     int readRet = read(fd_in,msg,BUF_SIZE);
     
     int bytes_received;
+    printf("send:\n");
     fprintf(stdout, "%s", msg);
     send(sock, msg , strlen(msg), 0);
     
     if((bytes_received = recv(sock, buf, BUF_SIZE, 0)) > 1)
     {
         buf[bytes_received] = '\0';
+        printf("receive:\n");
         fprintf(stdout, "%s", buf);
     }        
 
