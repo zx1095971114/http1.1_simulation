@@ -38,13 +38,13 @@ int close_socket(int sock)
 }
 
 //发送消息
-void send_400(int cli_sock, char* get_from_cli)  //发送错误页面（连带头部）
+void send_400(int cli_sock, char* get_from_cli)  //发送400错误页面（连带头部）
 {
 	char buff[1024]={0};     
-	strcpy(buff,"HTTP/1.1 404 NOT FOUND\n\r");
+	strcpy(buff,"HTTP/1.1 400 BAD REQUEST\n\r");
 	strcat(buff,"Server:http/1.1\n\r");
 	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
-	strcat(buff,"404 Not Found\n");  //发送给客户端的数据，用于显示
+	strcat(buff,"400 Bad Request\n");  //发送给客户端的数据，用于显示
 	send(cli_sock,buff,strlen(buff),0);
 }
 
@@ -58,7 +58,7 @@ void send_200(int cli_sock, char* get_from_cli)  //发送echo的页面（连带�
 	send(cli_sock,buff,strlen(buff),0);
 }
 
-void send_501(int cli_sock, char* get_from_cli)  //发送echo的页面（连带头部）
+void send_501(int cli_sock, char* get_from_cli)  //发送501的页面（连带头部）
 {
 	char buff[1024]={0};     
 	strcpy(buff,"HTTP/1.1 501 Not Implemented\n\r");
@@ -151,7 +151,7 @@ int main(int argc, char* argv[])
                 printf("Http Uri %s\n",request->http_uri);
                 for(int index = 0;index < request->header_count;index++){
                     printf("Request Header\n");
-                    printf("Header name %s Header Value %s\n",request->headers[index].header_name,request->headers[index].header_value);
+                    printf("Header name: %s\nHeader Value: %s\n",request->headers[index].header_name,request->headers[index].header_value);
                 }
             }
 

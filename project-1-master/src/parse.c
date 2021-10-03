@@ -1,3 +1,11 @@
+/*
+ * @Author: your name
+ * @Date: 2021-09-29 00:49:48
+ * @LastEditTime: 2021-10-03 12:19:02
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \project-1-master\src\parse.c
+ */
 #include "parse.h"
 
 /**
@@ -12,9 +20,14 @@ Request * parse(char *buffer, int size, int socketFd) {
 	int i = 0, state;
 	size_t offset = 0;
 	char ch;
-	char buf[8192];
+	char buf[8192];//读入的报文存放的位置
 	memset(buf, 0, 8192);
 
+	//首部字段的数目
+	int headers_num = 0;
+	/*
+	* 读入报文至buf中
+	*/
 	state = STATE_START;
 	while (state != STATE_CRLFCRLF) {
 		char expected = 0;
@@ -22,15 +35,22 @@ Request * parse(char *buffer, int size, int socketFd) {
 		if (i == size)
 			break;
 
-		ch = buffer[i++];
-		buf[offset++] = ch;
+		ch = buffer[i];
+		i++;
+		buf[offset] = ch;
+		offset++;
 
 		switch (state) {
 		case STATE_START:
+			expected = '\r';
+			break;
 		case STATE_CRLF:
+			headers_num++;
 			expected = '\r';
 			break;
 		case STATE_CR:
+			expected = '\n';
+			break;
 		case STATE_CRLFCR:
 			expected = '\n';
 			break;
@@ -46,12 +66,14 @@ Request * parse(char *buffer, int size, int socketFd) {
 
 	}
 
+	headers_num = headers_num - 1;
+
     //Valid End State
 	if (state == STATE_CRLFCRLF) {
 		Request *request = (Request *) malloc(sizeof(Request));
         request->header_count=0;
         //TODO You will need to handle resizing this in parser.y
-        request->headers = (Request_header *) malloc(sizeof(Request_header)*1);
+        request->headers = (Request_header *) malloc(sizeof(Request_header)*headers_num);
 		set_parsing_options(buf, i, request);
 
 		if (yyparse() == SUCCESS) {
