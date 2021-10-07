@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-09-29 00:49:48
- * @LastEditTime: 2021-10-03 12:19:02
+ * @LastEditTime: 2021-10-07 10:13:50
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\src\parse.c
@@ -70,6 +70,8 @@ Request * parse(char *buffer, int size, int socketFd) {
 
     //Valid End State
 	if (state == STATE_CRLFCRLF) {
+		printf(buf);
+		printf("\n");
 		Request *request = (Request *) malloc(sizeof(Request));
         request->header_count=0;
         //TODO You will need to handle resizing this in parser.y

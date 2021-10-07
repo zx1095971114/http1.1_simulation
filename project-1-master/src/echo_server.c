@@ -18,6 +18,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include "parse.h"
 
 #define ECHO_PORT 9999
@@ -25,7 +26,7 @@
 #define COMPARE_GET(ptr) (ptr[0] == 'G' && ptr[1] == 'E' && ptr[2] == 'T')
 #define COMPARE_HEAD(ptr) (ptr[0] == 'H' && ptr[1] == 'E' && ptr[2] == 'A' && ptr[3] == 'D')
 #define COMPARE_POST(ptr) (ptr[0] == 'P' && ptr[1] == 'O' && ptr[2] == 'S' && ptr[3] == 'T')
-
+#define COMPARE_VERSION(ptr) (ptr[0] == 'H' && ptr[1] == 'T' && ptr[2] == 'T' && ptr[3] == 'P' && ptr[4] == '/' && ptr[5] == '1' && ptr[6] == '.' && ptr[7] == '1' )
 
 int close_socket(int sock)
 {
@@ -37,8 +38,8 @@ int close_socket(int sock)
     return 0;
 }
 
-//发送消息
-void send_400(int cli_sock, char* get_from_cli)  //发送400错误页面（连带头部）
+//发送响应头部
+void send_400(int cli_sock, char* get_from_cli)  //发送400 BAD REQUEST页面（连带头部）
 {
 	char buff[1024]={0};     
 	strcpy(buff,"HTTP/1.1 400 BAD REQUEST\n\r");
@@ -48,17 +49,37 @@ void send_400(int cli_sock, char* get_from_cli)  //发送400错误页面（连�
 	send(cli_sock,buff,strlen(buff),0);
 }
 
-void send_200(int cli_sock, char* get_from_cli)  //发送echo的页面（连带头部）
+void send_404(int cli_sock)  //发送404 NOT FOUND页面（连带头部）
+{
+	char buff[1024]={0};     
+	strcpy(buff,"HTTP/1.1 404 NOT FOUND\n\r");
+	strcat(buff,"Server:http/1.1\n\r");
+	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
+	strcat(buff,"404 NOT FOUND\n");  //发送给客户端的数据，用于显示
+	send(cli_sock,buff,strlen(buff),0);
+}
+
+void send_408(int cli_sock)  //发送408 REQUEST TIMEOUT页面（连带头部）
+{
+	char buff[1024]={0};     
+	strcpy(buff,"HTTP/1.1 408 REQUEST TIMEOUT\n\r");
+	strcat(buff,"Server:http/1.1\n\r");
+	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
+	strcat(buff,"408 REQUEST TIMEOUT\n");  //发送给客户端的数据，用于显示
+	send(cli_sock,buff,strlen(buff),0);
+}
+
+void send_200_head(int cli_sock)  //发送echo的页面（连带头部）
 {
 	char buff[1024]={0};     
 	strcpy(buff,"HTTP/1.1 200 OK\n\r");
 	strcat(buff,"Server:http/1.1\n\r");
 	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
-	strcat(buff,get_from_cli);
 	send(cli_sock,buff,strlen(buff),0);
 }
 
-void send_501(int cli_sock, char* get_from_cli)  //发送501的页面（连带头部）
+
+void send_501(int cli_sock)  //发送501 Not Implemented的页面（连带头部）
 {
 	char buff[1024]={0};     
 	strcpy(buff,"HTTP/1.1 501 Not Implemented\n\r");
@@ -69,6 +90,58 @@ void send_501(int cli_sock, char* get_from_cli)  //发送501的页面（连带�
     
 }
 
+void send_505(int cli_sock)  //发送505 HTTP Version Not Supported的页面（连带头部）
+{
+	char buff[1024]={0};     
+	strcpy(buff,"HTTP/1.1 505 HTTP Version Not Supported\n\r");
+	strcat(buff,"Server:http/1.1\n\r");
+	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
+	strcat(buff,"505 HTTP Version Not Supported\n");  
+	send(cli_sock,buff,strlen(buff),0);
+    
+}
+
+/*发送html页面
+ *PS:未找到资源发送404 NOT FOUND
+ */
+void send_html(char* http_uri, int cli_sock){
+    char pathname[128] = "/var/www/html";
+    strcat(pathname, http_uri);
+    printf("获得的文件路径:");
+    printf(pathname);
+    printf("\n");
+    int fd = open(pathname,O_RDONLY);
+    if(fd == -1){
+        send_404(cli_sock);
+    }
+    else{
+        send_200_head(cli_sock);
+        while (1){
+            char buff[128] = {0};
+            int cont = read(fd, buff, 127);
+            printf(buff);
+            printf("\nend\n");
+            if(cont <= 0){
+                printf("here1\n");
+                close(fd);
+                break;
+            }
+            printf("here2\n");
+            send(cli_sock, buff, strlen(buff), 0);
+        }
+        printf("here\n");
+    }
+}
+
+//发送echo页面
+void send_echo(int cli_sock, char* get_from_cli){
+    char buff[1024]={0};     
+	strcpy(buff,"HTTP/1.1 200 OK\n\r");
+	strcat(buff,"Server:http/1.1\n\r");
+	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
+    strcat(buff,get_from_cli);
+	send(cli_sock,buff,strlen(buff),0);
+}
 
 //判断报文格式以决定要采取何种回应措施
 //返回值为对应的状态码
@@ -78,8 +151,11 @@ int get_status(Request *request){
         return 400;
     }
     char* method = request->http_method;
-
-    if(COMPARE_GET(method) || COMPARE_HEAD(method) || COMPARE_POST(method)){
+    char* version = request->http_version;
+    if(!COMPARE_VERSION(version)){
+        return 505;
+    }
+    else if(COMPARE_GET(method) || COMPARE_HEAD(method) || COMPARE_POST(method)){
         return 200;
     }
     else{
@@ -157,12 +233,27 @@ int main(int argc, char* argv[])
 
             //根据解析做出相应的响应
             if(get_status(request) == 200){
-                send_200(client_sock,buf);
+                if(COMPARE_GET(request->http_method)){
+                    printf("发送开始\n");
+                    send_html(request->http_uri, client_sock);
+                    printf("发送完成\n");
+                }
+                else if(COMPARE_HEAD(request->http_method)){
+                    send_200_head(client_sock);
+                }
+                else{
+                    send_echo(client_sock, buf);
+                }
                 free(request->headers);
                 free(request);
             }
             else if(get_status(request) == 501){
-                send_501(client_sock,buf);
+                send_501(client_sock);
+                free(request->headers);
+                free(request);
+            }
+            else if(get_status(request) == 505){
+                send_505(client_sock);
                 free(request->headers);
                 free(request);
             }
@@ -171,6 +262,7 @@ int main(int argc, char* argv[])
             }
             
             memset(buf, 0, BUF_SIZE);
+            break;
         } 
 
         if (readret == -1)
