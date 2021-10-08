@@ -1,8 +1,8 @@
 /*
  * @Author: your name
  * @Date: 2021-09-29 00:49:48
- * @LastEditTime: 2021-09-30 23:48:36
- * @LastEditors: your name
+ * @LastEditTime: 2021-10-07 20:51:39
+ * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\include\parse.h
  */
@@ -28,6 +28,9 @@ typedef struct
 	char http_uri[4096];
 	Request_header *headers;
 	int header_count;
+	
+	//是否要持续连接属性:是为1，不是为0
+	int isPermanent;
 } Request;
 
 Request* parse(char *buffer, int size,int socketFd);

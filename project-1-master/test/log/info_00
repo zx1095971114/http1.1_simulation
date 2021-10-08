@@ -1,0 +1,6 @@
+[2021-10-08 09:01:28 239ms] [DEBUG] Init log!!  [main.c] [line:24] [main]
+[2021-10-08 09:01:28 242ms] [DEBUG] hello world!!  [main.c] [line:14] [test_func1]
+[2021-10-08 09:01:28 242ms] [DEBUG] Destroy log!!  [main.c] [line:28] [main]
+[2021-10-08 09:02:22 694ms] [DEBUG] Init log!!  [main.c] [line:24] [main]
+[2021-10-08 09:02:22 698ms] [DEBUG] hello world!!  [main.c] [line:14] [test_func1]
+[2021-10-08 09:02:22 698ms] [DEBUG] Destroy log!!  [main.c] [line:28] [main]

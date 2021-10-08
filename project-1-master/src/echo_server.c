@@ -20,6 +20,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "parse.h"
+#include <time.h>
+#include "log.h"
+#include "send_code.h"
 
 #define ECHO_PORT 9999
 #define BUF_SIZE 4096
@@ -38,110 +41,6 @@ int close_socket(int sock)
     return 0;
 }
 
-//发送响应头部
-void send_400(int cli_sock, char* get_from_cli)  //发送400 BAD REQUEST页面（连带头部）
-{
-	char buff[1024]={0};     
-	strcpy(buff,"HTTP/1.1 400 BAD REQUEST\n\r");
-	strcat(buff,"Server:http/1.1\n\r");
-	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
-	strcat(buff,"400 Bad Request\n");  //发送给客户端的数据，用于显示
-	send(cli_sock,buff,strlen(buff),0);
-}
-
-void send_404(int cli_sock)  //发送404 NOT FOUND页面（连带头部）
-{
-	char buff[1024]={0};     
-	strcpy(buff,"HTTP/1.1 404 NOT FOUND\n\r");
-	strcat(buff,"Server:http/1.1\n\r");
-	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
-	strcat(buff,"404 NOT FOUND\n");  //发送给客户端的数据，用于显示
-	send(cli_sock,buff,strlen(buff),0);
-}
-
-void send_408(int cli_sock)  //发送408 REQUEST TIMEOUT页面（连带头部）
-{
-	char buff[1024]={0};     
-	strcpy(buff,"HTTP/1.1 408 REQUEST TIMEOUT\n\r");
-	strcat(buff,"Server:http/1.1\n\r");
-	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
-	strcat(buff,"408 REQUEST TIMEOUT\n");  //发送给客户端的数据，用于显示
-	send(cli_sock,buff,strlen(buff),0);
-}
-
-void send_200_head(int cli_sock)  //发送echo的页面（连带头部）
-{
-	char buff[1024]={0};     
-	strcpy(buff,"HTTP/1.1 200 OK\n\r");
-	strcat(buff,"Server:http/1.1\n\r");
-	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
-	send(cli_sock,buff,strlen(buff),0);
-}
-
-
-void send_501(int cli_sock)  //发送501 Not Implemented的页面（连带头部）
-{
-	char buff[1024]={0};     
-	strcpy(buff,"HTTP/1.1 501 Not Implemented\n\r");
-	strcat(buff,"Server:http/1.1\n\r");
-	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
-	strcat(buff,"501 Not Implemented\n");  
-	send(cli_sock,buff,strlen(buff),0);
-    
-}
-
-void send_505(int cli_sock)  //发送505 HTTP Version Not Supported的页面（连带头部）
-{
-	char buff[1024]={0};     
-	strcpy(buff,"HTTP/1.1 505 HTTP Version Not Supported\n\r");
-	strcat(buff,"Server:http/1.1\n\r");
-	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
-	strcat(buff,"505 HTTP Version Not Supported\n");  
-	send(cli_sock,buff,strlen(buff),0);
-    
-}
-
-/*发送html页面
- *PS:未找到资源发送404 NOT FOUND
- */
-void send_html(char* http_uri, int cli_sock){
-    char pathname[128] = "/var/www/html";
-    strcat(pathname, http_uri);
-    printf("获得的文件路径:");
-    printf(pathname);
-    printf("\n");
-    int fd = open(pathname,O_RDONLY);
-    if(fd == -1){
-        send_404(cli_sock);
-    }
-    else{
-        send_200_head(cli_sock);
-        while (1){
-            char buff[128] = {0};
-            int cont = read(fd, buff, 127);
-            printf(buff);
-            printf("\nend\n");
-            if(cont <= 0){
-                printf("here1\n");
-                close(fd);
-                break;
-            }
-            printf("here2\n");
-            send(cli_sock, buff, strlen(buff), 0);
-        }
-        printf("here\n");
-    }
-}
-
-//发送echo页面
-void send_echo(int cli_sock, char* get_from_cli){
-    char buff[1024]={0};     
-	strcpy(buff,"HTTP/1.1 200 OK\n\r");
-	strcat(buff,"Server:http/1.1\n\r");
-	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
-    strcat(buff,get_from_cli);
-	send(cli_sock,buff,strlen(buff),0);
-}
 
 //判断报文格式以决定要采取何种回应措施
 //返回值为对应的状态码
@@ -170,6 +69,14 @@ int main(int argc, char* argv[])
     socklen_t cli_size;
     struct sockaddr_in addr, cli_addr;
     char buf[BUF_SIZE];
+    Info info;
+    info.code = 0;
+    info.fileLength = 0;
+    info.IP = "127.0.0.1";
+    info.method = "GET";
+    info.path = "/var/www/html";
+    info.seriousness = "error";
+    info.version = "HTTP/1.1";
 
     fprintf(stdout, "----- Echo Server -----\n");
     
@@ -215,8 +122,32 @@ int main(int argc, char* argv[])
             fprintf(stderr, "Error accepting connection.\n");
             return EXIT_FAILURE;
         }
-        readret = 0;
 
+
+        readret = 0;
+        // 计时器，判断是否超时
+        // time_t startTime = time(&startTime);
+        // //跳出循环的标志
+        // int flag = 0;
+        // while (1)
+        // {
+        //     time_t endTime = time(&endTime);
+        //     readret = recv(client_sock, buf, BUF_SIZE, 0);
+        //     if(readret >= 1){
+        //         break;
+        //     }
+        //     if(endTime - startTime >= 10){
+        //         flag = 1;
+        //         break;
+        //     }
+        // }
+        // if(flag == 1){
+        //     break;
+        // }
+        //用isPermanent判断是否要持久连接
+        int isPermanent = 1;
+        //每次用之前清理buf的缓存
+        memset(buf, 0, sizeof(buf));
         while((readret = recv(client_sock, buf, BUF_SIZE, 0)) >= 1)
         {
             //显示解析信息
@@ -227,58 +158,83 @@ int main(int argc, char* argv[])
                 printf("Http Uri %s\n",request->http_uri);
                 for(int index = 0;index < request->header_count;index++){
                     printf("Request Header\n");
-                    printf("Header name: %s\nHeader Value: %s\n",request->headers[index].header_name,request->headers[index].header_value);
+                printf("Header name: %s\nHeader Value: %s\n",request->headers[index].header_name,request->headers[index].header_value);
                 }
+                //判断是否要持续连接
+                isPermanent = request->isPermanent;
+
+                //修改info状态
+                info.method = request->http_method;
+                char path[100] = {0};
+                strcpy(path, "/var/www/html");
+                strcat(path, request->http_uri);
+                info.path = path;
+                info.version = request->http_version;
+            }
+
+            if(isPermanent == 0){
+                break;
             }
 
             //根据解析做出相应的响应
             if(get_status(request) == 200){
+                info.code = 200;
                 if(COMPARE_GET(request->http_method)){
                     printf("发送开始\n");
-                    send_html(request->http_uri, client_sock);
+                    send_html(request->http_uri, client_sock, info);
                     printf("发送完成\n");
+                    printf("isPermanent:%d\n",request->isPermanent);
                 }
                 else if(COMPARE_HEAD(request->http_method)){
-                    send_200_head(client_sock);
+                    send_200_head(client_sock, info);
                 }
                 else{
-                    send_echo(client_sock, buf);
+                    send_echo(client_sock, buf, info);
                 }
                 free(request->headers);
                 free(request);
             }
             else if(get_status(request) == 501){
-                send_501(client_sock);
+                info.code = 501;
+                send_501(client_sock, info);
                 free(request->headers);
                 free(request);
             }
             else if(get_status(request) == 505){
-                send_505(client_sock);
+                info.code = 505;
+                send_505(client_sock, info);
                 free(request->headers);
                 free(request);
             }
             else{
-                send_400(client_sock,buf);
+                info.code = 400;
+                send_400(client_sock, info);
             }
             
             memset(buf, 0, BUF_SIZE);
             break;
         } 
 
-        if (readret == -1)
-        {
-            close_socket(client_sock);
-            close_socket(sock);
-            fprintf(stderr, "Error reading from client socket.\n");
-            return EXIT_FAILURE;
-        }
+            if (readret == -1)
+            {
+                close_socket(client_sock);
+                close_socket(sock);
+                fprintf(stderr, "Error reading from client socket.\n");
+                return EXIT_FAILURE;
+            }
 
+            if(isPermanent == 0){
+                break;
+            }
+        
+        
         if (close_socket(client_sock))
         {
             close_socket(sock);
             fprintf(stderr, "Error closing client socket.\n");
             return EXIT_FAILURE;
         }
+        
     }
 
     close_socket(sock);

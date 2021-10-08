@@ -1,0 +1,20 @@
+[2021-10-08 18:20:56 +0800] [error] [client 127.0.0.1]
+501: The method is not implemented: PUT
+
+[2021-10-08 18:22:56 +0800] [error] [client 127.0.0.1]
+505: The version of the client does not match the server's: HTTP/1.0
+
+[2021-10-08 18:26:59 +0800] [error] [client 127.0.0.1]
+400: The format of the request is wrong!
+
+[2021-10-08 18:27:36 +0800] [error] [client 127.0.0.1]
+400: The format of the request is wrong!
+
+[2021-10-08 18:33:20 +0800] [error] [client 127.0.0.1]
+
+[2021-10-08 18:33:32 +0800] [error] [client 127.0.0.1]
+400: The format of the request is wrong!
+
+[2021-10-08 18:33:43 +0800] [error] [client 127.0.0.1]
+400: The format of the request is wrong!
+

@@ -1,12 +1,16 @@
 /*
  * @Author: your name
  * @Date: 2021-09-29 00:49:48
- * @LastEditTime: 2021-10-07 10:13:50
+ * @LastEditTime: 2021-10-07 21:39:23
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\src\parse.c
  */
 #include "parse.h"
+#include <string.h>
+#define COMPARE_CONNECTION(ptr) (ptr[0] == 'C' && ptr[1] == 'o' && ptr[2] == 'n' && ptr[3] == 'n' && ptr[4] == 'e' && ptr[5] == 'c' && ptr[6] == 't' && ptr[7] == 'i' && ptr[8] == 'o' && ptr[9] == 'n')
+#define COMPARE_CLOSE(ptr) (ptr[0] == 'c' && ptr[1] == 'l' && ptr[2] == 'o' && ptr[3] == 's' && ptr[4] == 'e')
+
 
 /**
 * Given a char buffer returns the parsed request headers
@@ -74,11 +78,20 @@ Request * parse(char *buffer, int size, int socketFd) {
 		printf("\n");
 		Request *request = (Request *) malloc(sizeof(Request));
         request->header_count=0;
+		//isPermanent属性用以标识是否要持续连接
+		request->isPermanent = 1;
+
         //TODO You will need to handle resizing this in parser.y
         request->headers = (Request_header *) malloc(sizeof(Request_header)*headers_num);
 		set_parsing_options(buf, i, request);
 
 		if (yyparse() == SUCCESS) {
+			printf("=======================================\n");
+			for(int index = 0; index < request->header_count; index++){
+				if(COMPARE_CONNECTION(request->headers[index].header_name) && COMPARE_CLOSE(request->headers[index].header_value)){
+					request->isPermanent = 0;
+				}
+			}
             return request;
 		}
 		else{

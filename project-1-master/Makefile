@@ -3,7 +3,7 @@ OBJ_DIR := obj
 # all src files
 SRC := $(wildcard $(SRC_DIR)/*.c)
 # all objects
-OBJ := $(OBJ_DIR)/y.tab.o $(OBJ_DIR)/lex.yy.o $(OBJ_DIR)/parse.o $(OBJ_DIR)/example.o
+OBJ := $(OBJ_DIR)/y.tab.o $(OBJ_DIR)/lex.yy.o $(OBJ_DIR)/parse.o $(OBJ_DIR)/example.o $(OBJ_DIR)/log.o $(OBJ_DIR)/send_code.o
 # all binaries
 BIN := example echo_server echo_client
 # C compiler
@@ -30,9 +30,11 @@ $(SRC_DIR)/y.tab.c: $(SRC_DIR)/parser.y
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(OBJ_DIR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c src/log.c -o obj/log.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c src/send_code.c -o obj/send_code.o
 
 echo_server: $(OBJ_DIR)/echo_server.o
-	$(CC) -Werror -I ./include  $^ obj/parse.o obj/y.tab.o obj/lex.yy.o -o $@
+	$(CC) -Werror -I ./include  $^ obj/parse.o obj/y.tab.o obj/lex.yy.o obj/log.o obj/send_code.o -o $@
 
 echo_client: $(OBJ_DIR)/echo_client.o
 	$(CC) -Werror $^ -o $@
