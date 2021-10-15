@@ -23,6 +23,9 @@
 #include <time.h>
 #include "log.h"
 #include "send_code.h"
+#include "file_motion.h"
+#include "my_segment.h"
+#include "my_bool.h"
 
 #define ECHO_PORT 9999
 #define BUF_SIZE 4096
@@ -116,6 +119,9 @@ int main(int argc, char* argv[])
         client_sock = accept(sock, (struct sockaddr *) &cli_addr,
                                     &cli_size);
 
+        //计时器，判断是否超时
+        time_t start_time = time(&start_time);
+
         if ((client_sock == -1))
         {
             close(sock);
@@ -125,107 +131,109 @@ int main(int argc, char* argv[])
 
 
         readret = 0;
-        // 计时器，判断是否超时
-        // time_t startTime = time(&startTime);
-        // //跳出循环的标志
-        // int flag = 0;
-        // while (1)
-        // {
-        //     time_t endTime = time(&endTime);
-        //     readret = recv(client_sock, buf, BUF_SIZE, 0);
-        //     if(readret >= 1){
-        //         break;
-        //     }
-        //     if(endTime - startTime >= 10){
-        //         flag = 1;
-        //         break;
-        //     }
-        // }
-        // if(flag == 1){
-        //     break;
-        // }
         //用isPermanent判断是否要持久连接
         int isPermanent = 1;
         //每次用之前清理buf的缓存
         memset(buf, 0, sizeof(buf));
         while((readret = recv(client_sock, buf, BUF_SIZE, 0)) >= 1)
         {
-            //显示解析信息
-            Request *request = parse(buf, strlen(buf), client_sock);
-            if(request != NULL){
-                printf("Http Method %s\n",request->http_method);
-                printf("Http Version %s\n",request->http_version);
-                printf("Http Uri %s\n",request->http_uri);
-                for(int index = 0;index < request->header_count;index++){
-                    printf("Request Header\n");
-                printf("Header name: %s\nHeader Value: %s\n",request->headers[index].header_name,request->headers[index].header_value);
-                }
-                //判断是否要持续连接
-                isPermanent = request->isPermanent;
-
-                //修改info状态
-                info.method = request->http_method;
-                char path[100] = {0};
-                strcpy(path, "/var/www/html");
-                strcat(path, request->http_uri);
-                info.path = path;
-                info.version = request->http_version;
-            }
-
-            if(isPermanent == 0){
+            time_t end_time = time(&end_time);
+            if(end_time - start_time >= 5){
+                info.code = 400;
+                send_408(client_sock, info);
                 break;
             }
 
-            //根据解析做出相应的响应
-            if(get_status(request) == 200){
-                info.code = 200;
-                if(COMPARE_GET(request->http_method)){
-                    printf("发送开始\n");
-                    send_html(request->http_uri, client_sock, info);
-                    printf("发送完成\n");
-                    printf("isPermanent:%d\n",request->isPermanent);
+            //分割报文
+            int file_num = divide(buf);
+            for(int i = 1; i <= file_num; i++){
+                char path[50] = "/home/project-1-master/pipelining/recall";
+                char file_content[4096] = {0};
+                char sfile_num[5] = {0};
+                sprintf(sfile_num, "%d", i);
+                strcat(path, sfile_num);
+                read_file(path, file_content, 4096);
+                rm_file(path);
+
+                //显示解析信息
+                printf("file_contet: %s\n", file_content);
+                Request *request = parse(file_content, strlen(file_content), client_sock);
+                if(request != NULL){
+                    printf("Http Method %s\n",request->http_method);
+                    printf("Http Version %s\n",request->http_version);
+                    printf("Http Uri %s\n",request->http_uri);
+                    for(int index = 0;index < request->header_count;index++){
+                        printf("Request Header\n");
+                    printf("Header name: %s\nHeader Value: %s\n",request->headers[index].header_name,request->headers[index].header_value);
+                    }
+                    //判断是否要持续连接
+                    isPermanent = request->isPermanent;
+
+                    //修改info状态
+                    info.method = request->http_method;
+                    char path[100] = {0};
+                    strcpy(path, "/var/www/html");
+                    strcat(path, request->http_uri);
+                    info.path = path;
+                    info.version = request->http_version;
                 }
-                else if(COMPARE_HEAD(request->http_method)){
-                    send_200_head(client_sock, info);
+
+                if(isPermanent == 0){
+                    break;
+                }
+
+                //根据解析做出相应的响应
+                if(get_status(request) == 200){
+                    info.code = 200;
+                    if(COMPARE_GET(request->http_method)){
+                        printf("发送开始\n");
+                        send_html(request->http_uri, client_sock, info);
+                        printf("发送完成\n");
+                        printf("isPermanent:%d\n",request->isPermanent);
+                    }
+                    else if(COMPARE_HEAD(request->http_method)){
+                        info.method = "HEAD";
+                        send_HEAD(client_sock, info);
+                    }
+                    else{
+                        info.method = "POST";
+                        send_echo(client_sock, buf, info);
+                    }
+                    free(request->headers);
+                    free(request);
+                }
+                else if(get_status(request) == 501){
+                    info.code = 501;
+                    send_501(client_sock, info);
+                    free(request->headers);
+                    free(request);
+                }
+                else if(get_status(request) == 505){
+                    info.code = 505;
+                    send_505(client_sock, info);
+                    free(request->headers);
+                    free(request);
                 }
                 else{
-                    send_echo(client_sock, buf, info);
+                    info.code = 400;
+                    send_400(client_sock, info);
                 }
-                free(request->headers);
-                free(request);
-            }
-            else if(get_status(request) == 501){
-                info.code = 501;
-                send_501(client_sock, info);
-                free(request->headers);
-                free(request);
-            }
-            else if(get_status(request) == 505){
-                info.code = 505;
-                send_505(client_sock, info);
-                free(request->headers);
-                free(request);
-            }
-            else{
-                info.code = 400;
-                send_400(client_sock, info);
-            }
-            
-            memset(buf, 0, BUF_SIZE);
+                
+            }   
             break;
         } 
 
-            if (readret == -1)
-            {
-                close_socket(client_sock);
-                close_socket(sock);
-                fprintf(stderr, "Error reading from client socket.\n");
-                return EXIT_FAILURE;
-            }
+        if (readret == -1)
+        {
+            close_socket(client_sock);
+            close_socket(sock);
+            fprintf(stderr, "Error reading from client socket.\n");
+            return EXIT_FAILURE;
+        }
 
-            if(isPermanent == 0){
-                break;
-            }
+        if(isPermanent == 0){
+            break;
+        }
         
         
         if (close_socket(client_sock))
@@ -235,9 +243,75 @@ int main(int argc, char* argv[])
             return EXIT_FAILURE;
         }
         
+        printf("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
     }
+    
 
     close_socket(sock);
 
     return EXIT_SUCCESS;
 }
+
+
+// //显示解析信息
+//             Request *request = parse(buf, strlen(buf), client_sock);
+//             if(request != NULL){
+//                 printf("Http Method %s\n",request->http_method);
+//                 printf("Http Version %s\n",request->http_version);
+//                 printf("Http Uri %s\n",request->http_uri);
+//                 for(int index = 0;index < request->header_count;index++){
+//                     printf("Request Header\n");
+//                 printf("Header name: %s\nHeader Value: %s\n",request->headers[index].header_name,request->headers[index].header_value);
+//                 }
+//                 //判断是否要持续连接
+//                 isPermanent = request->isPermanent;
+
+//                 //修改info状态
+//                 info.method = request->http_method;
+//                 char path[100] = {0};
+//                 strcpy(path, "/var/www/html");
+//                 strcat(path, request->http_uri);
+//                 info.path = path;
+//                 info.version = request->http_version;
+//             }
+
+//             if(isPermanent == 0){
+//                 break;
+//             }
+
+//             //根据解析做出相应的响应
+//             if(get_status(request) == 200){
+//                 info.code = 200;
+//                 if(COMPARE_GET(request->http_method)){
+//                     printf("发送开始\n");
+//                     send_html(request->http_uri, client_sock, info);
+//                     printf("发送完成\n");
+//                     printf("isPermanent:%d\n",request->isPermanent);
+//                 }
+//                 else if(COMPARE_HEAD(request->http_method)){
+//                     send_200_head(client_sock, info);
+//                 }
+//                 else{
+//                     send_echo(client_sock, buf, info);
+//                 }
+//                 free(request->headers);
+//                 free(request);
+//             }
+//             else if(get_status(request) == 501){
+//                 info.code = 501;
+//                 send_501(client_sock, info);
+//                 free(request->headers);
+//                 free(request);
+//             }
+//             else if(get_status(request) == 505){
+//                 info.code = 505;
+//                 send_505(client_sock, info);
+//                 free(request->headers);
+//                 free(request);
+//             }
+//             else{
+//                 info.code = 400;
+//                 send_400(client_sock, info);
+//             }
+            
+//             memset(buf, 0, BUF_SIZE);

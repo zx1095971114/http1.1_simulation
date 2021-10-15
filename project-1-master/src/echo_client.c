@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-09-29 00:49:48
- * @LastEditTime: 2021-10-07 18:06:16
+ * @LastEditTime: 2021-10-16 01:34:16
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\src\echo_client.c
@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 {
     if (argc != 4)
     {
-        fprintf(stderr, "usage: %s <server-ip> <port>",argv[0]);
+        fprintf(stderr, "usage: %s <server-ip> <port> <file>",argv[0]);
         return EXIT_FAILURE;
     }
 
@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
     fprintf(stdout, "%s", msg);
     send(sock, msg , strlen(msg), 0);
     
-    printf("receive:\n");
+    printf("receive:\n\n");
     while((bytes_received = recv(sock, buf, BUF_SIZE, 0)) > 1)
     {
         buf[bytes_received] = '\0';

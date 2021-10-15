@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-09-29 00:49:48
- * @LastEditTime: 2021-10-07 21:39:23
+ * @LastEditTime: 2021-10-16 01:39:29
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\src\parse.c
@@ -15,7 +15,7 @@
 /**
 * Given a char buffer returns the parsed request headers
 */
-Request * parse(char *buffer, int size, int socketFd) {
+Request* parse(char *buffer, int size, int socketFd) {
   //Differant states in the state machine
 	enum {
 		STATE_START = 0, STATE_CR, STATE_CRLF, STATE_CRLFCR, STATE_CRLFCRLF
@@ -76,6 +76,7 @@ Request * parse(char *buffer, int size, int socketFd) {
 	if (state == STATE_CRLFCRLF) {
 		printf(buf);
 		printf("\n");
+		
 		Request *request = (Request *) malloc(sizeof(Request));
         request->header_count=0;
 		//isPermanent属性用以标识是否要持续连接

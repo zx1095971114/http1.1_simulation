@@ -2,6 +2,13 @@
     "files.associations": {
         "parse.h": "c",
         "string.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "file_motion.h": "c",
+        "algorithm": "c",
+        "xutility": "c",
+        "send_code.h": "c",
+        "fcntl.h": "c",
+        "segment.h": "c",
+        "my_bool.h": "c"
     }
 }

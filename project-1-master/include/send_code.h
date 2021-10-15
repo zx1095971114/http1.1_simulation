@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-10-09 00:22:18
- * @LastEditTime: 2021-10-09 01:11:50
+ * @LastEditTime: 2021-10-16 01:49:42
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\include\send_code.h
@@ -20,7 +20,7 @@ void send_404(int cli_sock, Info info);
 void send_408(int cli_sock, Info info);
 
 //发送echo的页面（连带头部）
-void send_200_head(int cli_sock, Info info);  
+void send_200_head(int cli_sock);  
 
 //发送501 Not Implemented的页面（连带头部）
 void send_501(int cli_sock, Info info);
@@ -35,5 +35,8 @@ void send_html(char* http_uri, int cli_sock, Info info);
 
 //发送echo页面
 void send_echo(int cli_sock, char* get_from_cli, Info info);
+
+//发送HEAD页面
+void send_HEAD(int cli_sock, Info info);
 
 #endif

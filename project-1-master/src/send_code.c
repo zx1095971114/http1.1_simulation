@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-10-09 00:18:48
- * @LastEditTime: 2021-10-09 01:52:06
+ * @LastEditTime: 2021-10-16 01:55:19
  * @LastEditors: Please set LastEditors
  * @Description: 发送状态码对应的报文
  * @FilePath: \project-1-master\src\send_code.c
@@ -22,9 +22,9 @@
 void send_400(int cli_sock, Info info)  //发送400 BAD REQUEST页面（连带头部）
 {
 	char buff[1024]={0};     
-	strcpy(buff,"HTTP/1.1 400 BAD REQUEST\n\r");
-	strcat(buff,"Server:http/1.1\n\r");
-	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
+	strcpy(buff,"HTTP/1.1 400 BAD REQUEST\r\n");
+	strcat(buff,"Server: http/1.1\r\n");
+	strcat(buff,"\r\n");   //空行标识数据部分和头部分开
 	strcat(buff,"400 Bad Request\n");  //发送给客户端的数据，用于显示
     errorLog(info);
 	send(cli_sock,buff,strlen(buff),0);
@@ -34,9 +34,9 @@ void send_400(int cli_sock, Info info)  //发送400 BAD REQUEST页面（连带�
 void send_404(int cli_sock, Info info)  //发送404 NOT FOUND页面（连带头部）
 {
 	char buff[1024]={0};     
-	strcpy(buff,"HTTP/1.1 404 NOT FOUND\n\r");
-	strcat(buff,"Server:http/1.1\n\r");
-	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
+	strcpy(buff,"HTTP/1.1 404 NOT FOUND\r\n");
+	strcat(buff,"Server: http/1.1\r\n");
+	strcat(buff,"\r\n");   //空行标识数据部分和头部分开
 	strcat(buff,"404 NOT FOUND\n");  //发送给客户端的数据，用于显示
     errorLog(info);
 	send(cli_sock,buff,strlen(buff),0);
@@ -45,9 +45,9 @@ void send_404(int cli_sock, Info info)  //发送404 NOT FOUND页面（连带头�
 void send_408(int cli_sock, Info info)  //发送408 REQUEST TIMEOUT页面（连带头部）
 {
 	char buff[1024]={0};     
-	strcpy(buff,"HTTP/1.1 408 REQUEST TIMEOUT\n\r");
-	strcat(buff,"Server:http/1.1\n\r");
-	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
+	strcpy(buff,"HTTP/1.1 408 REQUEST TIMEOUT\r\n");
+	strcat(buff,"Server: http/1.1\r\n");
+	strcat(buff,"\r\n");   //空行标识数据部分和头部分开
 	strcat(buff,"408 REQUEST TIMEOUT\n");  //发送给客户端的数据，用于显示
     errorLog(info);
 	send(cli_sock,buff,strlen(buff),0);
@@ -56,19 +56,26 @@ void send_408(int cli_sock, Info info)  //发送408 REQUEST TIMEOUT页面（连�
 void send_200_head(int cli_sock)  //发送200的头部页面
 {
 	char buff[1024]={0};     
-	strcpy(buff,"HTTP/1.1 200 OK\n\r");
-	strcat(buff,"Server:http/1.1\n\r");
-	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
+	strcpy(buff,"HTTP/1.1 200 OK\r\n");
+	strcat(buff,"Server: http/1.1\r\n");
+	strcat(buff,"Connection: Keep-Alive\r\n");
+	strcat(buff,"\r\n");   //空行标识数据部分和头部分开
 	send(cli_sock,buff,strlen(buff),0);
+}
+
+void send_HEAD(int cli_sock, Info info)  //发送HEAD页面
+{
+	send_200_head(cli_sock);
+	commonLog(info);
 }
 
 
 void send_501(int cli_sock, Info info)  //发送501 Not Implemented的页面（连带头部）
 {
 	char buff[1024]={0};     
-	strcpy(buff,"HTTP/1.1 501 Not Implemented\n\r");
-	strcat(buff,"Server:http/1.1\n\r");
-	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
+	strcpy(buff,"HTTP/1.1 501 Not Implemented\r\n");
+	strcat(buff,"Server: http/1.1\r\n");
+	strcat(buff,"\r\n");   //空行标识数据部分和头部分开
 	strcat(buff,"501 Not Implemented\n");
     errorLog(info);  
 	send(cli_sock,buff,strlen(buff),0);
@@ -78,14 +85,15 @@ void send_501(int cli_sock, Info info)  //发送501 Not Implemented的页面（�
 void send_505(int cli_sock, Info info)  //发送505 HTTP Version Not Supported的页面（连带头部）
 {
 	char buff[1024]={0};     
-	strcpy(buff,"HTTP/1.1 505 HTTP Version Not Supported\n\r");
-	strcat(buff,"Server:http/1.1\n\r");
-	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
+	strcpy(buff,"HTTP/1.1 505 HTTP Version Not Supported\r\n");
+	strcat(buff,"Server: http/1.1\r\n");
+	strcat(buff,"\r\n");   //空行标识数据部分和头部分开
 	strcat(buff,"505 HTTP Version Not Supported\n");
     errorLog(info);  
 	send(cli_sock,buff,strlen(buff),0);
     
 }
+
 
 /*发送html页面
  *PS:未找到资源发送404 NOT FOUND
@@ -98,6 +106,7 @@ void send_html(char* http_uri, int cli_sock, Info info){
     printf("\n");
     int fd = open(pathname,O_RDONLY);
     if(fd == -1){
+		info.code = 404;
         send_404(cli_sock, info);
     }
     else{
@@ -124,9 +133,9 @@ void send_html(char* http_uri, int cli_sock, Info info){
 //发送echo页面
 void send_echo(int cli_sock, char* get_from_cli, Info info){
     char buff[1024]={0};     
-	strcpy(buff,"HTTP/1.1 200 OK\n\r");
-	strcat(buff,"Server:http/1.1\n\r");
-	strcat(buff,"\n\r");   //空行标识数据部分和头部分开
+	strcpy(buff,"HTTP/1.1 200 OK\r\n");
+	strcat(buff,"Server: http/1.1\r\n");
+	strcat(buff,"\r\n");   //空行标识数据部分和头部分开
     strcat(buff,get_from_cli);
     info.fileLength = strlen(get_from_cli);
     commonLog(info);
