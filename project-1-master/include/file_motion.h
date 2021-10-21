@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-10-15 23:20:07
- * @LastEditTime: 2021-10-15 23:27:01
+ * @LastEditTime: 2021-10-18 21:47:49
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\include\file_motion.h
@@ -30,9 +30,9 @@ bool write_file(char* path, char* content);
  * @param {char*} path 文件路径
  * @param {char*} content 读取的内容存放位置
  * @param {int} length content的长度
- * @return {*}
+ * @return {*} open的返回值
  */
-bool read_file(char* path, char* content, int length);
+int read_file(char* path, char* content, int length);
 
 /**
  * @description: 删除文件(调用remove,写在这里为了好看) 

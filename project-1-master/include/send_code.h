@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-10-09 00:22:18
- * @LastEditTime: 2021-10-16 01:49:42
+ * @LastEditTime: 2021-10-17 12:37:14
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\include\send_code.h
@@ -19,7 +19,7 @@ void send_404(int cli_sock, Info info);
 //发送408 REQUEST TIMEOUT页面（连带头部）
 void send_408(int cli_sock, Info info);
 
-//发送echo的页面（连带头部）
+//发送200头部的页面（连带头部）
 void send_200_head(int cli_sock);  
 
 //发送501 Not Implemented的页面（连带头部）

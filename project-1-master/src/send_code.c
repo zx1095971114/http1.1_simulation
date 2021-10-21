@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-10-09 00:18:48
- * @LastEditTime: 2021-10-16 01:55:19
+ * @LastEditTime: 2021-10-16 22:25:10
  * @LastEditors: Please set LastEditors
  * @Description: 发送状态码对应的报文
  * @FilePath: \project-1-master\src\send_code.c
@@ -58,7 +58,6 @@ void send_200_head(int cli_sock)  //发送200的头部页面
 	char buff[1024]={0};     
 	strcpy(buff,"HTTP/1.1 200 OK\r\n");
 	strcat(buff,"Server: http/1.1\r\n");
-	strcat(buff,"Connection: Keep-Alive\r\n");
 	strcat(buff,"\r\n");   //空行标识数据部分和头部分开
 	send(cli_sock,buff,strlen(buff),0);
 }
@@ -102,7 +101,7 @@ void send_html(char* http_uri, int cli_sock, Info info){
     char pathname[128] = "/var/www/html";
     strcat(pathname, http_uri);
     printf("获得的文件路径:");
-    printf(pathname);
+    printf("%s",pathname);
     printf("\n");
     int fd = open(pathname,O_RDONLY);
     if(fd == -1){
@@ -118,7 +117,7 @@ void send_html(char* http_uri, int cli_sock, Info info){
             if(cont > 0){
                 length = length + cont;
             }
-            printf(buff);
+            printf("%s", buff);
             if(cont <= 0){
                 close(fd);
                 break;

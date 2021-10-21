@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-10-15 22:16:43
- * @LastEditTime: 2021-10-15 23:27:18
+ * @LastEditTime: 2021-10-18 21:49:54
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\src\file_motion.c
@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include "my_bool.h"
 
+
 /**
  * @description: 向文件中写入 
  * @param {char*} path 文件路径
@@ -20,8 +21,15 @@
  * @return {*}
  */
 bool write_file(char* path, char* content){
+
+    printf("path: %s\n", path);
+    printf("content: %s\n", content);
+
     FILE* fp = fopen(path, "ab");
+    //printf("ok1\n");
+    //printf("%p\n",fp);
     setbuf(fp, NULL);
+    //printf("ok2\n");
     fprintf(fp, "%s", content);
     fflush(fp);
     fclose(fp);
@@ -34,14 +42,14 @@ bool write_file(char* path, char* content){
  * @param {char*} path 文件路径
  * @param {char*} content 读取的内容存放位置
  * @param {int} length content的长度
- * @return {*}
+ * @return {*} open的返回值
  */
-bool read_file(char* path, char* content, int length){
-    int fd_in = open(path, 0);
-    read(fd_in, content, length);
-    close(fd_in);
-    return TRUE;
-}
+// int read_file(char* path, char* content, int length){
+//     int fd_in = open(path, 0);
+//     read(fd_in, content, length);
+//     // close(fd_in);
+//     return fd_in;
+// }
 
 /**
  * @description: 删除文件(调用remove,写在这里为了好看) 

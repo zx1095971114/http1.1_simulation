@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-10-14 20:48:14
- * @LastEditTime: 2021-10-16 01:15:32
+ * @LastEditTime: 2021-10-21 11:33:15
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\src\segment.c
@@ -16,38 +16,46 @@
 #include <unistd.h>
 #include "my_bool.h"
 #include "file_motion.h"
+#include "debug.h"
 
 
 int divide(char* buff){
-    // printf("buff: %s", buff);
+    
+    // //printf("buff: %s", buff);
     //记录被分割的报文数目
     int file_num = 0;
     char* msg;
     //用于标记报文分割位置
     bool flag = FALSE;
 
+    //printf("1\n");
     msg = strtok(buff, "\n");
     file_num++;
+    //printf("2\n");
     while (msg != NULL)
     {
-        char msg_former[45] = {0};
+        char msg_former[256] = {0};
         strcpy(msg_former, msg);
+        //printf("3\n");
 
         char file_path[50] = "/home/project-1-master/pipelining/recall";
         char sfile_num[5] = {0};
         sprintf(sfile_num, "%d", file_num);
         strcat(file_path, sfile_num);
 
-        // printf("msg: %s", msg);
-        // strcat(msg, "\n");
-        // char* msg_copy = (char*) malloc(sizeof(char) * (strlen(msg) + 1));
-        char msg_copy[45] = {0};
-        strcpy(msg_copy, msg);
-        strcat(msg_copy, "\n");
-        write_file(file_path, msg_copy);
+        char msg_copy[512];
 
-        // printf("msg_length: %ld", strlen(msg));
+        strcpy(msg_copy, msg);
+        
+        strcat(msg_copy, "\n");
+        
+        write_file(file_path, msg_copy);
+        // printf("msg_copy: %s", msg_copy);
+        // free(msg_copy);
+        
+        
         msg = strtok(NULL, "\n");
+        
         
         if(flag == TRUE){
             file_num++;
@@ -62,16 +70,21 @@ int divide(char* buff){
         }
     }
 
-    return file_num - 1;
+    return file_num;
 }
 
+
+
+
 // int main(int agc, char* argv[]){
+    
 //     char msg[4096];
-//     int fd_in = open("../cp1/sample_request_realistic", 0);
+//     int fd_in = open("../cp1/sample_request_example", 0);
 //     int readRet = read(fd_in,msg,4096);
 //     divide(msg);
-//     char m[50] = {0};
-//     read_file("/home/project-1-master/pipelining/recall1", m, 50);
+
+//     // char m[50] = {0};
+//     // read_file("/home/project-1-master/pipelining/recall1", m, 50);
 // }
 
 

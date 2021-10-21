@@ -1,15 +1,19 @@
 /*
  * @Author: your name
  * @Date: 2021-09-29 00:49:48
- * @LastEditTime: 2021-10-16 01:39:29
+ * @LastEditTime: 2021-10-18 21:32:06
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\src\parse.c
  */
 #include "parse.h"
+
 #include <string.h>
 #define COMPARE_CONNECTION(ptr) (ptr[0] == 'C' && ptr[1] == 'o' && ptr[2] == 'n' && ptr[3] == 'n' && ptr[4] == 'e' && ptr[5] == 'c' && ptr[6] == 't' && ptr[7] == 'i' && ptr[8] == 'o' && ptr[9] == 'n')
 #define COMPARE_CLOSE(ptr) (ptr[0] == 'c' && ptr[1] == 'l' && ptr[2] == 'o' && ptr[3] == 's' && ptr[4] == 'e')
+
+#define DEBUG
+#include "debug.h"
 
 
 /**
@@ -74,8 +78,6 @@ Request* parse(char *buffer, int size, int socketFd) {
 
     //Valid End State
 	if (state == STATE_CRLFCRLF) {
-		printf(buf);
-		printf("\n");
 		
 		Request *request = (Request *) malloc(sizeof(Request));
         request->header_count=0;
