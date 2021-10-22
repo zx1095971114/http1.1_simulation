@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-10-14 20:48:14
- * @LastEditTime: 2021-10-22 21:36:02
+ * @LastEditTime: 2021-10-23 00:16:44
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\src\segment.c
@@ -43,7 +43,7 @@ bool destroy_Segment_queue(Segment_queue* queue){
 
 bool push(Segment_queue* queue, char* msg){
     Segment* node = (Segment*) malloc(sizeof(Segment));
-    node->message = (char*) malloc(sizeof(char) * 256);
+    node->message = (char*) malloc(sizeof(char) * 2048);
     strcpy(node->message, msg);
     node->next = NULL;
     queue->last->next = node;

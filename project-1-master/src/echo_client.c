@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-09-29 00:49:48
- * @LastEditTime: 2021-10-16 01:34:16
+ * @LastEditTime: 2021-10-23 00:19:01
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\src\echo_client.c
@@ -82,6 +82,7 @@ int main(int argc, char* argv[])
     {
         buf[bytes_received] = '\0';
         fprintf(stdout, "%s", buf);
+        printf("\n");
     }        
 
     freeaddrinfo(servinfo);

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-09-29 00:49:48
- * @LastEditTime: 2021-10-22 21:38:40
+ * @LastEditTime: 2021-10-23 00:30:29
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\src\parse.c
@@ -85,7 +85,7 @@ Request* parse(char *buffer, int size, int socketFd) {
 		request->isPermanent = 1;
 
         //TODO You will need to handle resizing this in parser.y
-        request->headers = (Request_header *) malloc(sizeof(Request_header)*headers_num);
+        request->headers = (Request_header *) malloc(sizeof(Request_header)*100);
 		set_parsing_options(buf, i, request);
 
 		if (yyparse() == SUCCESS) {

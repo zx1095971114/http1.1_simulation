@@ -1,7 +1,7 @@
 /*
  * @Author: 周翔
  * @Date: 2021-10-08 17:04:34
- * @LastEditTime: 2021-10-17 10:35:22
+ * @LastEditTime: 2021-10-22 23:09:57
  * @LastEditors: Please set LastEditors
  * @Description: 用于记录日志信息
  * @FilePath: \project-1-master\src\log.c
@@ -62,13 +62,13 @@ void commonLog(Info info){
     strcat(log, length);
     strcat(log, "\n");
 
-    printf("===========================\n");
-    printf("%s", log);
-    printf("\n");
-    int a = fprintf(fp, "%s", log);
+    // printf("===========================\n");
+    // printf("%s", log);
+    // printf("\n");
+    fprintf(fp, "%s", log);
     fflush(fp);
-    printf("写入字符数:%d\n", a);
-    printf("============================\n");
+    // printf("写入字符数:%d\n", a);
+    // printf("============================\n");
     fclose(fp);
 }
 

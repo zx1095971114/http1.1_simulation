@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-10-09 00:18:48
- * @LastEditTime: 2021-10-21 23:43:11
+ * @LastEditTime: 2021-10-23 00:09:05
  * @LastEditors: Please set LastEditors
  * @Description: 发送状态码对应的报文
  * @FilePath: \project-1-master\src\send_code.c
@@ -100,9 +100,9 @@ void send_505(int cli_sock, Info info)  //发送505 HTTP Version Not Supported�
 void send_html(char* http_uri, int cli_sock, Info info){
     char pathname[128] = "/var/www/html";
     strcat(pathname, http_uri);
-    printf("获得的文件路径:");
-    printf("%s",pathname);
-    printf("\n");
+    // printf("获得的文件路径:");
+    // printf("%s",pathname);
+    // printf("\n");
     int fd = open(pathname,O_RDONLY);
     if(fd == -1){
 		info.code = 404;
@@ -117,7 +117,7 @@ void send_html(char* http_uri, int cli_sock, Info info){
             if(cont > 0){
                 length = length + cont;
             }
-            printf("%s", buff);
+            //printf("%s", buff);
             if(cont <= 0){
                 close(fd);
                 break;
