@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-09-29 00:49:48
- * @LastEditTime: 2021-10-18 21:32:06
+ * @LastEditTime: 2021-10-22 21:38:40
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\src\parse.c
@@ -18,7 +18,7 @@
 
 /**
 * Given a char buffer returns the parsed request headers
-*/
+*/ 
 Request* parse(char *buffer, int size, int socketFd) {
   //Differant states in the state machine
 	enum {
@@ -89,7 +89,7 @@ Request* parse(char *buffer, int size, int socketFd) {
 		set_parsing_options(buf, i, request);
 
 		if (yyparse() == SUCCESS) {
-			printf("=======================================\n");
+			// printf("=======================================\n");
 			for(int index = 0; index < request->header_count; index++){
 				if(COMPARE_CONNECTION(request->headers[index].header_name) && COMPARE_CLOSE(request->headers[index].header_value)){
 					request->isPermanent = 0;

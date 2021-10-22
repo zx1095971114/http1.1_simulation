@@ -27,6 +27,7 @@
 #include "my_segment.h"
 #include "my_bool.h"
 #include "debug.h"
+#include <assert.h>
 
 #define ECHO_PORT 9999
 #define BUF_SIZE 4096
@@ -199,27 +200,34 @@ int main(int argc, char* argv[])
 
                     //分割报文
                     BUG_POINT(1);
-                    int file_num = divide(buf);
+                    Segment_queue* queue = (Segment_queue*) malloc(sizeof(Segment_queue));
+                    // printf("buf: %s\n", buf);
+                    init_Segment_queue(queue);
+                    int file_num = divide(buf, queue);
                     BUG_POINT(2);
-                    for(int i = 1; i <= 1; i++){
-                        char path[50] = "/home/project-1-master/pipelining/recall";
-                        char file_content[4096] = {0};
-                        char sfile_num[5] = {0};
-                        sprintf(sfile_num, "%d", i);
-                        strcat(path, sfile_num);
+                    for(int i = 1; i <= file_num; i++){
+                        // char path[50] = "/home/project-1-master/pipelining/recall";
+                        // char file_content[4096] = {0};
+                        // char sfile_num[5] = {0};
+                        // sprintf(sfile_num, "%d", i);
+                        // strcat(path, sfile_num);
 
-                        //打开文件   
-                        int fd_in = open(path, 0);
-                        int readRet = read(fd_in, file_content, 4096);
+                        // //打开文件   
+                        // int fd_in = open(path, 0);
+                        // int readRet = read(fd_in, file_content, 4096);
 
-                        //显示解析信息
-                        //printf("file_contet: %s\n", file_content);
-                        // parse(buf, readRet, fd_in);
+                        // //显示解析信息
+                        // //printf("file_contet: %s\n", file_content);
+                        // // parse(buf, readRet, fd_in);
 
-                        close(fd_in);
-                        rm_file(path);
+                        // close(fd_in);
+                        // rm_file(path);
+                        char segment[4096];
+                        memset(segment, 0, sizeof(segment));
+                        assert(pop(queue, segment) != FALSE);
 
-                        Request *request = parse(file_content, readRet, fd_in);
+                        Request *request = parse(segment, sizeof(segment), eventFd);
+                        // Request *request = parse(buf, strlen(buf), eventFd);
                         if(request != NULL){
                             // printf("Http Method %s\n",request->http_method);
                             // printf("Http Version %s\n",request->http_version);
@@ -281,7 +289,9 @@ int main(int argc, char* argv[])
                             send_400(eventFd, info);
                         }
                         
-                    }   
+                    }
+                    destroy_Segment_queue(queue);
+                    free(queue);   
                     break;
                 } 
 

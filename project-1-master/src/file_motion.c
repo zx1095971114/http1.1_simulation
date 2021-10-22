@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-10-15 22:16:43
- * @LastEditTime: 2021-10-18 21:49:54
+ * @LastEditTime: 2021-10-21 23:59:57
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\src\file_motion.c
@@ -22,8 +22,8 @@
  */
 bool write_file(char* path, char* content){
 
-    printf("path: %s\n", path);
-    printf("content: %s\n", content);
+    // printf("path: %s\n", path);
+    // printf("content: %s\n", content);
 
     FILE* fp = fopen(path, "ab");
     //printf("ok1\n");
