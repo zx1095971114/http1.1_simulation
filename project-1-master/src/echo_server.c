@@ -1,15 +1,15 @@
 /******************************************************************************
 * echo_server.c                                                               *
 *                                                                             *
-* Description: This file contains the C source code for an echo server.  The  *
-*              server runs on a hard-coded port and simply write back anything*
-*              sent to it by connected clients.  It does not support          *
-*              concurrent clients.                                            *
+* Description: 实现了GET,HEAD方法，对POST请求echo返回，实现pipelining，实现8000 *
+*              客户端的并发访问                                                *
 *                                                                             *
-* Authors: Athula Balachandran <abalacha@cs.cmu.edu>,                         *
-*          Wolf Richter <wolf@cs.cmu.edu>                                     *
+* Authors: 周翔，吴家旺                                                        *
+* Former Authors: Athula Balachandran <abalacha@cs.cmu.edu>,                  *
+*                 Wolf Richter <wolf@cs.cmu.edu>                              *
 *                                                                             *
 *******************************************************************************/
+
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -70,13 +70,10 @@ int get_status(Request *request){
 
 int main(int argc, char* argv[])
 {
-    // int sock, client_sock;
     int sock;
     ssize_t readret;
-    // socklen_t cli_size;
-    // struct sockaddr_in addr, cli_addr;
     struct sockaddr_in addr;
-    // char buf[BUF_SIZE];
+    
     Info info;
     info.code = 0;
     info.fileLength = 0;
@@ -137,7 +134,7 @@ int main(int argc, char* argv[])
         int infds = select(maxfd + 1, &tempFdSet, NULL, NULL, NULL);
 
         //select返回失败的情况
-        if(infds < 0){
+        if(infds <= 0){
             printf("select() failed.\n");
             break;
         }
@@ -173,24 +170,35 @@ int main(int argc, char* argv[])
 
             //其他事件发生在客户端socket，发生的事件可能是有数据被发送过来或其主动断开连接
             else{
+                BUG_PRINTF("eventfd: %d\n\n", eventFd);
                 char buf[BUF_SIZE];
                 memset(buf, 0, sizeof(buf));
 
                 //计时器，判断是否超时
                 time_t start_time = time(&start_time);
 
-                // if ((client_sock == -1))
-                // {
-                //     close(sock);
-                //     fprintf(stderr, "Error accepting connection.\n");
-                //     return EXIT_FAILURE;
-                // }
-
                 readret = 0;
                 //用isPermanent判断是否要持久连接
                 int isPermanent = 1;
                 while((readret = recv(eventFd, buf, BUF_SIZE, 0)) >= 1)
                 {
+                    //客户端断开连接或发生错误
+                    if(readret <= 0){
+                        //关闭客户端
+                        close(eventFd);
+                        //将客户端socket移除
+                        FD_CLR(eventFd, &readFdSet);
+                        //重新计算maxfd的值
+                        if(eventFd == maxfd){
+                            for(int i = maxfd; i > 0; i--){
+                                if(FD_ISSET(i, &readFdSet)){
+                                    maxfd = i;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
                     time_t end_time = time(&end_time);
                     if(end_time - start_time >= 5){
                         info.code = 400;
@@ -199,43 +207,21 @@ int main(int argc, char* argv[])
                     }
 
                     //分割报文
-                    BUG_POINT(1);
+                    BUG_POINT(5);
                     Segment_queue* queue = (Segment_queue*) malloc(sizeof(Segment_queue));
-                    // printf("buf: %s\n", buf);
                     init_Segment_queue(queue);
                     int file_num = divide(buf, queue);
-                    BUG_POINT(2);
+                    BUG_POINT(6);
+                    BUG_PRINTF("file_num: %d\n", file_num);
                     for(int i = 1; i <= file_num; i++){
-                        // char path[50] = "/home/project-1-master/pipelining/recall";
-                        // char file_content[4096] = {0};
-                        // char sfile_num[5] = {0};
-                        // sprintf(sfile_num, "%d", i);
-                        // strcat(path, sfile_num);
-
-                        // //打开文件   
-                        // int fd_in = open(path, 0);
-                        // int readRet = read(fd_in, file_content, 4096);
-
-                        // //显示解析信息
-                        // //printf("file_contet: %s\n", file_content);
-                        // // parse(buf, readRet, fd_in);
-
-                        // close(fd_in);
-                        // rm_file(path);
+                        BUG_POINT(7);
                         char segment[4096];
                         memset(segment, 0, sizeof(segment));
                         assert(pop(queue, segment) != FALSE);
 
+                        BUG_POINT(9);
                         Request *request = parse(segment, sizeof(segment), eventFd);
-                        // Request *request = parse(buf, strlen(buf), eventFd);
                         if(request != NULL){
-                            // printf("Http Method %s\n",request->http_method);
-                            // printf("Http Version %s\n",request->http_version);
-                            // printf("Http Uri %s\n",request->http_uri);
-                            // for(int index = 0;index < request->header_count;index++){
-                            //     printf("Request Header\n");
-                            // printf("Header name: %s\nHeader Value: %s\n",request->headers[index].header_name,request->headers[index].header_value);
-                            // }
                             //判断是否要持续连接
                             isPermanent = request->isPermanent;
 
@@ -253,13 +239,14 @@ int main(int argc, char* argv[])
                         }
 
                         //根据解析做出相应的响应
+                        BUG_POINT(1);
                         if(get_status(request) == 200){
+                            BUG_POINT(2);
                             info.code = 200;
                             if(COMPARE_GET(request->http_method)){
-                                // printf("发送开始\n");
+                                BUG_POINT(3);
                                 send_html(request->http_uri, eventFd, info);
-                                //printf("发送完成\n");
-                                //printf("isPermanent:%d\n",request->isPermanent);
+                                BUG_POINT(4);
                             }
                             else if(COMPARE_HEAD(request->http_method)){
                                 info.method = "HEAD";
@@ -331,14 +318,10 @@ int main(int argc, char* argv[])
             }
         }
 
-
-        
-        //printf("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
     }
     
 
     close_socket(sock);
-
     return EXIT_SUCCESS;
 }
 

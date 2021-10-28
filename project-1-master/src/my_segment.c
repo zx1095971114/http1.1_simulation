@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-10-14 20:48:14
- * @LastEditTime: 2021-10-23 00:16:44
+ * @LastEditTime: 2021-10-23 18:07:31
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\src\segment.c
@@ -16,9 +16,11 @@
 #include <unistd.h>
 #include "my_bool.h"
 #include "file_motion.h"
-#include "debug.h"
 #include "my_segment.h"
 #include <assert.h>
+
+// #define DEBUG
+#include "debug.h"
 
 bool init_Segment_queue(Segment_queue* queue){
     Segment* p = (Segment*) malloc(sizeof(Segment));
@@ -67,6 +69,7 @@ bool pop(Segment_queue* queue, char* msg){
 
 
 int divide(char* buff, Segment_queue* queue){
+    BUG_PRINTF("buff:\n%s", buff);
     
     // //printf("buff: %s", buff);
     //记录被分割的报文数目
@@ -84,8 +87,10 @@ int divide(char* buff, Segment_queue* queue){
     //存每个报文的segment
     char segment[4096];
     memset(segment, 0, sizeof(segment));
+    BUG_POINT(10);
     while (msg != NULL)
     {
+        BUG_POINT(11);
         char msg_former[256] = {0};
         strcpy(msg_former, msg);
 
@@ -94,9 +99,11 @@ int divide(char* buff, Segment_queue* queue){
         strcpy(msg_copy, msg);  
         strcat(msg_copy, "\n");
 
+        BUG_POINT(12);
         //到报文尾部
         if(isRear == TRUE){
             //一个报文入队，清空segment
+            BUG_POINT(13);
             strcat(segment, msg_copy);
             push(queue, segment);
             memset(segment, 0, sizeof(segment));
@@ -106,17 +113,24 @@ int divide(char* buff, Segment_queue* queue){
         }
         //到报文头部
         else if(isHead){
+            BUG_POINT(14);
             strcpy(segment, msg_copy);
             isHead = FALSE;
         }
         //报文中间
         else{
+            BUG_POINT(15);
             strcat(segment, msg_copy);
         }
 
         msg = strtok(NULL, "\n");
 
         if(msg == NULL){
+            if(file_num == 0){
+                push(queue, segment);
+                memset(segment, 0, sizeof(segment));
+                file_num++;
+            }
             break;
         }
         

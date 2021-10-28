@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-10-15 23:24:01
- * @LastEditTime: 2021-10-22 22:04:59
+ * @LastEditTime: 2021-10-23 10:15:54
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \project-1-master\include\segment.h
@@ -19,14 +19,14 @@
 #include "my_bool.h"
 
 typedef struct segment{
-    char* message;
-    struct segment* next; 
+    char* message; //该节点报文内容
+    struct segment* next;  //下一节点的指针
 }Segment;
 
 typedef struct segment_queue
 {
-    Segment* front;
-    Segment* last;
+    Segment* front; //指向头结点
+    Segment* last; //指向尾节点
 }Segment_queue;
 
 /**
